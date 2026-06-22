@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { formatRupiah } from '../utils/currency'
+import { apiFetch } from '../utils/api'
 import type { Order } from '../types'
 
 const orders = ref<Order[]>([])
@@ -9,7 +10,7 @@ const isLoadingData = ref(false)
 const fetchOrders = async () => {
   isLoadingData.value = true
   try {
-    const res = await fetch('/api/orders')
+    const res = await apiFetch('/api/orders')
     if (!res.ok) throw new Error('Failed to fetch orders')
     orders.value = await res.json()
   } catch (err) {

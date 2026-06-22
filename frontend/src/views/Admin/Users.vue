@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import BaseModal from '../../components/BaseModal.vue'
+import { apiFetch } from '../../utils/api'
 import type { User } from '../../types'
 
 const users = ref<User[]>([])
@@ -20,7 +21,7 @@ const form = ref<Partial<User> & { password?: string }>({
 const fetchUsers = async () => {
   isLoadingData.value = true
   try {
-    const res = await fetch('/api/users')
+    const res = await apiFetch('/api/users')
     if (!res.ok) throw new Error('Failed to fetch users')
     users.value = await res.json()
   } catch (err) {
@@ -61,9 +62,8 @@ const saveUser = async () => {
       delete payload.password
     }
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
 
@@ -96,7 +96,7 @@ const deleteUser = async (u: User) => {
   if (!confirm(`Yakin ingin menghapus akun ${u.username}?`)) return
   
   try {
-    const res = await fetch(`/api/users/${u.id}`, { method: 'DELETE' })
+    const res = await apiFetch(`/api/users/${u.id}`, { method: 'DELETE' })
     if (res.ok) {
       fetchUsers()
     } else {

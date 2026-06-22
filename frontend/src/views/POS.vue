@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '../store/auth'
 import { formatRupiah } from '../utils/currency'
+import { apiFetch } from '../utils/api'
 import type { Product, CartItem } from '../types'
 
 const auth = useAuthStore()
@@ -19,7 +20,7 @@ const selectedCategory = ref('Semua')
 const fetchProducts = async () => {
   isLoadingProducts.value = true
   try {
-    const res = await fetch('/api/products')
+    const res = await apiFetch('/api/products')
     if (!res.ok) throw new Error('Failed to fetch products')
     products.value = await res.json()
   } catch (err) {
@@ -80,9 +81,8 @@ const checkout = async () => {
 
   isCheckingOut.value = true
   try {
-    const res = await fetch('/api/orders', {
+    const res = await apiFetch('/api/orders', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         items: cart.value,
         cashierId: auth.user.id

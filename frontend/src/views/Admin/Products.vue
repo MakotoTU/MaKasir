@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import BaseModal from '../../components/BaseModal.vue'
 import { formatRupiah } from '../../utils/currency'
+import { apiFetch } from '../../utils/api'
 import type { Product } from '../../types'
 
 const products = ref<Product[]>([])
@@ -21,7 +22,7 @@ const form = ref<Partial<Product>>({
 const fetchProducts = async () => {
   isLoadingData.value = true
   try {
-    const res = await fetch('/api/products')
+    const res = await apiFetch('/api/products')
     if (!res.ok) throw new Error('Failed to fetch products')
     products.value = await res.json()
   } catch (err) {
@@ -56,9 +57,8 @@ const saveProduct = async () => {
     const url = isEditing.value ? `/api/products/${form.value.id}` : '/api/products'
     const method = isEditing.value ? 'PUT' : 'POST'
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form.value)
     })
 
@@ -80,7 +80,7 @@ const saveProduct = async () => {
 const deleteProduct = async (id: number) => {
   if (!confirm('Yakin ingin menghapus produk ini?')) return
   try {
-    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
+    const res = await apiFetch(`/api/products/${id}`, { method: 'DELETE' })
     if (res.ok) {
       fetchProducts()
     } else {
