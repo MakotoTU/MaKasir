@@ -35,6 +35,9 @@ const handleLogout = () => {
         <router-link v-if="auth.user?.role === 'admin'" to="/admin/users" class="nav-item">
           <span class="icon">👥</span> Manajemen Akun
         </router-link>
+        <router-link v-if="auth.user?.role === 'admin'" to="/admin/whatsapp" class="nav-item">
+          <span class="icon">💬</span> Status WhatsApp
+        </router-link>
         <router-link v-if="auth.user?.role === 'admin'" to="/orders" class="nav-item">
           <span class="icon">🧾</span> Semua Pesanan
         </router-link>

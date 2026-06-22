@@ -185,6 +185,17 @@ const app = new Elysia()
       })
     })
     .delete('/products/:id', async ({ params: { id } }) => await ProductController.delete(id))
+
+    // Endpoint WA Logout
+    .post('/admin/wa/logout', async ({ set }) => {
+      try {
+        await waService.logout();
+        return { success: true, message: 'WhatsApp disconnected' };
+      } catch (e: any) {
+        set.status = 500;
+        return { error: e.message || 'Gagal memutus koneksi WhatsApp' };
+      }
+    })
   );
 
 app.listen(process.env.PORT || 3000);

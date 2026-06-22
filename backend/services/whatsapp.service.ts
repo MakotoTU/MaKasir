@@ -1,6 +1,7 @@
 import makeWASocket, { DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import QRCode from 'qrcode';
+import fs from 'fs/promises';
 import { eventEmitter, EVENTS } from './event.service';
 
 export class WhatsAppService {
@@ -55,6 +56,29 @@ export class WhatsAppService {
       return { status: 'waiting_for_scan', qr: this.qrDataURL };
     }
     return { status: 'initializing' };
+  }
+
+  public async logout() {
+    if (this.sock) {
+      try {
+        await this.sock.logout();
+      } catch (err) {
+        console.error('Error during Baileys logout:', err);
+      }
+      try {
+        this.sock.end(undefined);
+      } catch (err) {
+        // Ignored
+      }
+      this.sock = null;
+    }
+    // Hapus folder session agar QR fresh saat reconnect
+    await fs.rm('./wa_session', { recursive: true, force: true });
+    this.isConnected = false;
+    this.qrDataURL = null;
+    
+    // Mulai inisialisasi ulang socket baru untuk menunggu scan QR baru
+    this.init();
   }
 
   public async sendMessage(to: string, text: string) {
