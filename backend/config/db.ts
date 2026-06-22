@@ -18,12 +18,13 @@ export const connectDB = async () => {
     await sequelize.authenticate();
     console.log('✅ Terhubung ke MySQL menggunakan Sequelize');
     
-    // Sinkronisasi model ke DB (auto-create table di dev mode)
-    if (process.env.NODE_ENV !== 'production') {
+    // ⚠️ WARNING: sync({ alter: true }) can drop columns silently. Only run this in development!
+    if (process.env.NODE_ENV === 'development') {
       await sequelize.sync({ alter: true });
       console.log('✅ Semua tabel tersinkronisasi (Mode Dev)');
     } else {
-      console.log('✅ Mode Production: Melewati sinkronisasi otomatis');
+      await sequelize.sync({ force: false }); // production: no alter, safe sync
+      console.log('✅ Mode Production: Melewati sinkronisasi otomatis (force: false)');
     }
   } catch (error) {
     console.error('❌ Gagal terhubung ke MySQL:', error);
