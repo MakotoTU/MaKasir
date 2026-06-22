@@ -93,3 +93,16 @@
 - **Diperbaiki**: Pembersihan kode migrasi lama (*MongoDB*) yang mendatangkan nilai `_id` menjadi `id` (*Sequelize/MySQL*) pada proses notifikasi di `whatsapp.service.ts`.
 - **Diubah**: Pengecekan status lingkungan (*environment*) dengan `NODE_ENV` sebelum menjalankan `sequelize.sync({ alter: true })` di `db.ts` untuk menghindari hilangnya skema tabel secara permanen bila masuk mode produksi.
 - **Diperbaiki**: Menata format nominal uang (menggunakan `Intl.NumberFormat`) ke dalam notifikasi otomatis layanan WhatsApp agar terlihat lebih profesional ketimbang `Rp1000000`.
+
+## [Senin, 22 Juni 2026 17:15]
+- **Ditambah (Keamanan - Kritis)**: Menambahkan modul `@elysiajs/jwt` dan mengimplementasikan *auth middleware* di *backend* (`index.ts`). Menyediakan dua *guard* pengaman: `requireAuth` (untuk rute kasir & admin) dan `requireAdmin` (untuk rute khusus admin). Seluruh akses API kini dilindungi di tingkat rute grup.
+- **Diubah**: Mengadaptasi proses *login* di `index.ts` agar menyertakan tanda tangan token JWT (`{ id, role }`) di dalam respons sukses, yang kemudian disimpan di Pinia *state* dan *local storage*.
+- **Ditambah (Frontend)**: Membuat berkas utilitas `frontend/src/utils/api.ts` berupa fungsi pembungkus `apiFetch`. Secara otomatis menyuntikkan *header* `Authorization: Bearer <token>` pada setiap permintaan data *API* dari antarmuka *frontend* jika sesi pengguna aktif.
+- **Diubah (Frontend)**: Mengubah seluruh pemanggilan `fetch` di komponen *frontend* (`POS.vue`, `Orders.vue`, `Admin/Products.vue`, `Admin/Users.vue`) menjadi menggunakan `apiFetch` agar seluruh komunikasi terautentikasi dengan benar.
+- **Diperbaiki (Keamanan - Kritis)**: Mengamankan folder sesi WhatsApp (`wa_session/` dan `auth_info_baileys/`) dengan menambahkannya ke dalam `.gitignore` di tingkat *backend* dan mengeluarkan berkas sesi aktif secara permanen dari sistem pemantauan versi Git.
+- **Diubah (Keamanan)**: Meningkatkan pengamanan fungsi sinkronisasi database `sequelize.sync()` di `db.ts` agar pengecekan `NODE_ENV === 'development'` dilakukan secara eksplisit (hanya mengubah kolom skema jika di *dev mode*). Jika di *production*, parameter `force: false` dipasang untuk mencegah penghapusan kolom secara diam-diam.
+- **Ditambah (Backend)**: Membuat *endpoint* `POST /api/admin/wa/logout` yang terlindungi hak akses admin untuk memutuskan sesi WhatsApp yang terhubung di server.
+- **Ditambah (Backend)**: Menambahkan *method* `logout()` di `whatsapp.service.ts` yang menutup soket Baileys, menghapus seluruh berkas sesi di dalam folder `wa_session`, serta melakukan inisialisasi ulang otomatis soket baru agar *QR Code* segar segera diproduksi tanpa perlu me-*restart* proses server *backend*.
+- **Ditambah (Frontend)**: Membuat halaman baru `WhatsAppStatus.vue` di antarmuka Admin untuk memantau status sesi secara langsung (Connected/Disconnected/Initializing), menampilkan kode QR scan terbaru secara dinamis, dan menyertakan tombol "Disconnect WhatsApp" dengan dialog konfirmasi aman dan status pemuatan (*loading state*).
+- **Diubah (Frontend)**: Mendaftarkan rute `/admin/whatsapp` di `router/index.ts` dan menambahkan tautan navigasi visual "Status WhatsApp" pada *sidebar* `DashboardLayout.vue`.
+
