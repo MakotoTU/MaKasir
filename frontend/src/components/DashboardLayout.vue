@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import NetworkStatus from './NetworkStatus.vue';
+import { initOfflineSync, cacheProducts } from '../services/sync.service';
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -9,6 +12,11 @@ const handleLogout = () => {
   auth.logout()
   router.push('/login')
 }
+
+onMounted(() => {
+  initOfflineSync();
+  cacheProducts();
+});
 </script>
 
 <template>
@@ -46,6 +54,9 @@ const handleLogout = () => {
         <router-link v-if="auth.user?.role === 'cashier'" to="/orders" class="nav-item">
           <span class="icon">🧾</span> Riwayat Pesanan
         </router-link>
+        <router-link to="/kitchen" class="nav-item">
+          <span class="icon">🍳</span> Tampilan Dapur
+        </router-link>
       </nav>
 
       <div class="sidebar-footer">
@@ -59,6 +70,9 @@ const handleLogout = () => {
       <header class="topbar">
         <div class="topbar-left">
           <h1>Selamat Datang, {{ auth.user?.username }}!</h1>
+        </div>
+        <div class="topbar-right">
+          <NetworkStatus />
         </div>
       </header>
       <div class="content-wrapper">

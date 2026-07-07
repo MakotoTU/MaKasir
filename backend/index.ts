@@ -4,10 +4,25 @@ import { connectDB } from './config/db';
 import { ProductController } from './controllers/ProductController';
 import { OrderController } from './controllers/OrderController';
 import { AuthController } from './controllers/AuthController';
+import { Order, OrderItem, User } from './models';
+import { eventEmitter, EVENTS } from './services/event.service';
 import { waService } from './services/whatsapp.service'; // Start WA Service on boot
+import { Op } from 'sequelize';
 
 // Setup koneksi DB
 connectDB();
+
+// Pool untuk menyimpan semua koneksi WebSocket KDS yang aktif
+const kdsClients = new Set<any>();
+
+// Broadcast pesanan baru ke semua layar dapur yang terhubung saat ORDER_CREATED
+eventEmitter.on(EVENTS.ORDER_CREATED, (order: any) => {
+  const payload = JSON.stringify({ type: 'new_order', data: order });
+  for (const ws of kdsClients) {
+    try { ws.send(payload); } catch { kdsClients.delete(ws); }
+  }
+});
+
 
 const requireAuth = async ({ jwt, headers: { authorization }, set }: any) => {
   if (!authorization) {
@@ -118,6 +133,7 @@ const app = new Elysia()
     }, {
       body: t.Object({
         cashierId: t.Number(),
+        clientUuid: t.Optional(t.String()),
         items: t.Array(t.Object({
           productId: t.Number(),
           qty: t.Number({ minimum: 1 })
@@ -196,7 +212,68 @@ const app = new Elysia()
         return { error: e.message || 'Gagal memutus koneksi WhatsApp' };
       }
     })
-  );
+  )
+
+  // Group 4: WebSocket KDS - Kitchen Display System (tanpa auth, akses dari jaringan lokal)
+  .ws('/ws/kds', {
+    async open(ws) {
+      // Tambahkan klien ke pool
+      kdsClients.add(ws);
+      console.log(`KDS client connected. Total clients: ${kdsClients.size}`);
+
+      // Kirim semua pesanan aktif hari ini (status: pending/proses) saat klien baru terhubung
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const activeOrders = await Order.findAll({
+        where: {
+          status: { [Op.notIn]: ['siap_disajikan', 'selesai_ambil'] },
+          createdAt: { [Op.gte]: today }
+        },
+        include: [
+          { model: OrderItem, as: 'items' },
+          { model: User, as: 'cashier', attributes: ['username'] }
+        ],
+        order: [['createdAt', 'ASC']]
+      });
+      ws.send(JSON.stringify({ type: 'init_orders', data: activeOrders }));
+    },
+
+    async message(ws, message: any) {
+      // Terima pesan update status dari KDS
+      if (message?.type === 'update_status' && message?.orderId && message?.status) {
+        const order = await Order.findByPk(message.orderId);
+        if (order) {
+          order.status = message.status;
+          await order.save();
+
+          // Broadcast status terupdate ke semua klien KDS yang terhubung
+          const broadcastPayload = JSON.stringify({
+            type: 'status_updated',
+            data: { orderId: message.orderId, status: message.status }
+          });
+          for (const client of kdsClients) {
+            try { client.send(broadcastPayload); } catch { kdsClients.delete(client); }
+          }
+
+          // Jika sudah siap disajikan, kirim notifikasi WhatsApp ke pelanggan (jika ada nomor)
+          if (message.status === 'siap_disajikan') {
+            const fullOrder = await Order.findByPk(message.orderId, {
+              include: [{ model: OrderItem, as: 'items' }]
+            });
+            if (fullOrder) {
+              console.log(`Order #${message.orderId} siap disajikan.`);
+              // Trigger WA notifikasi jika customerPhone tersedia di masa depan
+            }
+          }
+        }
+      }
+    },
+
+    close(ws) {
+      kdsClients.delete(ws);
+      console.log(`KDS client disconnected. Total clients: ${kdsClients.size}`);
+    }
+  });
 
 app.listen(process.env.PORT || 3000);
-console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
+console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);

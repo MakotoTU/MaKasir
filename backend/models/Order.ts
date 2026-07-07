@@ -7,6 +7,7 @@ export class Order extends Model {
   declare status: string;
   declare whatsappStatus: string;
   declare cashierId: number;
+  declare clientUuid?: string;
   declare createdAt: Date;
   declare items?: any[];
   declare cashier?: any;
@@ -29,6 +30,11 @@ Order.init({
   whatsappStatus: {
     type: DataTypes.STRING,
     defaultValue: 'pending'
+  },
+  clientUuid: {
+    type: DataTypes.STRING(36),
+    unique: true,
+    allowNull: true
   }
 }, {
   sequelize,

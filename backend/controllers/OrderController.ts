@@ -4,7 +4,19 @@ import { sequelize } from '../config/db';
 
 export class OrderController {
   static async createOrder(data: any) {
-    const { items, cashierId } = data;
+    const { items, cashierId, clientUuid } = data;
+
+    // Idempotency check: jika clientUuid sudah ada di DB, langsung kembalikan data pesanan tersebut
+    if (clientUuid) {
+      const existingOrder = await Order.findOne({
+        where: { clientUuid },
+        include: [{ model: OrderItem, as: 'items' }, { model: User, as: 'cashier' }]
+      });
+      if (existingOrder) {
+        console.log(`Duplicate order detected for clientUuid: ${clientUuid}. Returning existing order.`);
+        return existingOrder;
+      }
+    }
 
     let totalPrice = 0;
     
@@ -16,7 +28,8 @@ export class OrderController {
         totalPrice: 0,
         status: 'selesai',
         whatsappStatus: 'pending',
-        cashierId
+        cashierId,
+        ...(clientUuid ? { clientUuid } : {})
       }, { transaction });
 
       const orderItems = [];

@@ -4,6 +4,8 @@ import { useAuthStore } from '../store/auth'
 import { formatRupiah } from '../utils/currency'
 import { apiFetch } from '../utils/api'
 import type { Product, CartItem } from '../types'
+import { db } from '../db'
+import { saveOfflineOrder } from '../services/sync.service'
 
 const auth = useAuthStore()
 
@@ -20,12 +22,22 @@ const selectedCategory = ref('Semua')
 const fetchProducts = async () => {
   isLoadingProducts.value = true
   try {
+    // Coba ambil dari server terlebih dahulu
     const res = await apiFetch('/api/products')
     if (!res.ok) throw new Error('Failed to fetch products')
-    products.value = await res.json()
+    const serverProducts = await res.json()
+    products.value = serverProducts
   } catch (err) {
-    console.error(err)
-    alert('Gagal memuat daftar produk.')
+    console.warn('[POS] Gagal memuat produk dari server, mencoba IndexedDB cache...')
+    // Fallback: gunakan cache produk dari Dexie jika offline
+    const cached = await db.products.toArray()
+    if (cached.length > 0) {
+      products.value = cached as Product[]
+      console.log(`[POS] Menggunakan ${cached.length} produk dari cache offline.`)
+    } else {
+      console.error('[POS] Tidak ada cache produk tersedia.')
+      alert('Gagal memuat produk dan tidak ada cache tersedia. Harap sambungkan ke internet.')
+    }
   } finally {
     isLoadingProducts.value = false
   }
@@ -81,6 +93,18 @@ const checkout = async () => {
 
   isCheckingOut.value = true
   try {
+    // Mode Offline: simpan ke IndexedDB dan informasikan kasir
+    if (!navigator.onLine) {
+      await saveOfflineOrder(
+        auth.user.id,
+        cart.value.map(c => ({ productId: c.productId, qty: c.qty }))
+      )
+      alert('⚠️ Mode Offline: Pesanan disimpan dan akan dikirim otomatis saat internet kembali aktif.')
+      cart.value = []
+      return
+    }
+
+    // Mode Online: kirim langsung ke server
     const res = await apiFetch('/api/orders', {
       method: 'POST',
       body: JSON.stringify({
@@ -97,8 +121,18 @@ const checkout = async () => {
     alert('Order berhasil disimpan dan pesan WA akan segera dikirim!')
     cart.value = []
   } catch (err: any) {
-    console.error(err)
-    alert('Terjadi kesalahan saat checkout: ' + err.message)
+    // Jika error karena koneksi, save ke offline juga
+    if (!navigator.onLine || err.message?.includes('fetch')) {
+      await saveOfflineOrder(
+        auth.user!.id,
+        cart.value.map(c => ({ productId: c.productId, qty: c.qty }))
+      )
+      alert('⚠️ Koneksi terputus. Pesanan disimpan offline dan akan disinkronkan saat online kembali.')
+      cart.value = []
+    } else {
+      console.error(err)
+      alert('Terjadi kesalahan saat checkout: ' + err.message)
+    }
   } finally {
     isCheckingOut.value = false
   }

@@ -6,6 +6,7 @@ import Orders from '../views/Orders.vue'
 import AdminProducts from '../views/Admin/Products.vue'
 import AdminUsers from '../views/Admin/Users.vue'
 import AdminWhatsApp from '../views/Admin/WhatsAppStatus.vue'
+import KitchenView from '../views/KitchenView.vue'
 import { useAuthStore } from '../store/auth'
 
 const router = createRouter({
@@ -58,6 +59,11 @@ const router = createRouter({
           name: 'admin-whatsapp',
           component: AdminWhatsApp,
           meta: { requiresAdmin: true }
+        },
+        {
+          path: 'kitchen',
+          name: 'kitchen',
+          component: KitchenView
         }
       ]
     }
