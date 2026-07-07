@@ -1,7 +1,7 @@
-# Changelog MaKasir
-Dokumentasi lengkap pembaruan sistem POS MaKasir.
+# Changelog Aplikasi POS MaKasir
+Dokumentasi lengkap riwayat pembaruan sistem.
 
-## [v1.1.0] - Pembaruan Frontend & Stabilitas Backend
+## [Selasa, 07 Juli 2026 21:00] - v1.1.0 (Pembaruan Frontend & Stabilitas Backend)
 
 ### 🎨 Desain Antarmuka (Neobrutalism Redesign)
 Seluruh UI aplikasi telah dirombak total ke gaya **Neobrutalism** (berdasarkan preferensi instruksi) tanpa menyentuh *logic* dan *flow* yang sudah ada.
@@ -36,7 +36,6 @@ Seluruh UI aplikasi telah dirombak total ke gaya **Neobrutalism** (berdasarkan p
 - [ ] Memperbaiki fungsi `saveOfflineOrder` di `sync.service.ts` agar metadata pembayaran (`paymentMethod`, `amountPaid`, `changeDue`) tidak hilang saat koneksi terputus.
 - [ ] Implementasi algoritma *backoff* pada antrean pengiriman WhatsApp Notifikasi (fitur katalog bot dibatalkan sesuai instruksi).
 
-﻿# Changelog Aplikasi Kasir Terintegrasi WhatsApp
 
 ## [Minggu, 21 Juni 2026 19:42]
 - **Ditambahkan**: Pembuatan dokumen perencanaan awal (`planning.md`) berdasarkan kesepakatan sesi *brainstorming*.
