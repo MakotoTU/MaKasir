@@ -28,6 +28,10 @@ Expense.init({
   category: {
     type: DataTypes.STRING,
     defaultValue: 'Operasional'
+  },
+  createdBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 }, {
   sequelize,

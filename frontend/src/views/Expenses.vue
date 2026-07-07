@@ -97,9 +97,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useAuthStore } from '../../store/auth'
-import { apiFetch } from '../../utils/api'
-import { formatRupiah } from '../../utils/currency'
+import { useAuthStore } from '../store/auth'
+import { apiFetch } from '../utils/api'
+import { formatRupiah } from '../utils/currency'
 
 interface Expense {
   id: number
@@ -241,20 +241,27 @@ onMounted(fetchExpenses)
   border-radius: var(--radius-md);
   padding: 20px 24px;
   box-shadow: var(--shadow-sm);
-  border: 1px solid #f1f5f9;
+  border: var(--border-thick);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.summary-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-md);
 }
 
 .summary-label {
   font-size: 0.85rem;
-  color: var(--text-muted);
-  font-weight: 500;
+  color: black;
+  font-weight: 800;
   margin-bottom: 8px;
+  text-transform: uppercase;
 }
 
 .summary-value {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 800;
   color: var(--text-main);
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .header-actions {
@@ -264,14 +271,19 @@ onMounted(fetchExpenses)
 }
 
 .header-actions h2 {
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
   color: var(--text-main);
   margin: 0;
+  text-transform: uppercase;
 }
 
 .table-container {
   overflow-x: auto;
+  border: var(--border-thick);
+  border-radius: var(--radius-md);
+  background: white;
+  box-shadow: var(--shadow-sm);
 }
 
 table {
@@ -282,33 +294,36 @@ table {
 th, td {
   text-align: left;
   padding: 12px 16px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: var(--border-thin);
   font-size: 0.9rem;
 }
 
 th {
-  font-weight: 700;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  font-weight: 800;
+  color: black;
+  font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: #f8fafc;
+  background: var(--color-accent);
 }
 
-.date-cell { color: var(--text-muted); font-size: 0.85rem; white-space: nowrap; }
+.date-cell { color: black; font-size: 0.85rem; white-space: nowrap; font-weight: 700; }
 
 .amount-cell {
-  font-weight: 700;
-  color: #dc2626;
+  font-weight: 800;
+  color: var(--color-danger);
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .category-badge {
-  padding: 3px 10px;
-  background: rgba(99, 102, 241, 0.1);
-  color: #4f46e5;
-  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--color-primary);
+  color: black;
+  border-radius: var(--radius-sm);
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 800;
+  border: 2px solid #000;
+  text-transform: uppercase;
 }
 
 .actions {
@@ -317,31 +332,37 @@ th {
 }
 
 .btn-danger-outline {
-  background: transparent;
-  color: #ef4444;
-  border: 1px solid #fca5a5;
+  background: white;
+  color: var(--color-danger);
+  border: var(--border-thick);
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-danger-outline:hover {
-  background: #fef2f2;
+  background: var(--color-danger);
+  color: white;
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-md);
 }
 
 .empty-state {
   text-align: center;
   padding: 40px;
-  color: var(--text-muted);
+  color: black;
+  font-weight: 800;
+  border-bottom: none;
 }
 
 /* Modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
 }
 
 .modal-box {
@@ -353,33 +374,46 @@ th {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  border: var(--border-thick);
+  box-shadow: var(--shadow-lg);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: var(--border-thick);
+  padding-bottom: 12px;
 }
 
 .modal-header h3 {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 800;
   margin: 0;
+  text-transform: uppercase;
 }
 
 .modal-close {
-  background: none;
-  border: none;
+  background: var(--color-danger);
+  border: var(--border-thick);
   font-size: 1.2rem;
   cursor: pointer;
-  color: var(--text-muted);
+  color: white;
   padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.2s;
+  border-radius: var(--radius-sm);
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 2px 2px 0px #000;
+  font-weight: 800;
 }
 
-.modal-close:hover { background: #f1f5f9; }
+.modal-close:hover { 
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px #000;
+}
+.modal-close:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #000;
+}
 
 .modal-body {
   display: flex;
@@ -395,39 +429,51 @@ th {
 
 .form-group label {
   font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-main);
+  font-weight: 800;
+  color: black;
+  text-transform: uppercase;
 }
 
 .form-group input, .form-group select {
   padding: 10px 14px;
-  border: 1px solid #cbd5e1;
+  border: var(--border-thick);
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
-  transition: border-color 0.2s;
+  box-shadow: var(--shadow-sm);
+  font-weight: 700;
 }
 
 .form-group input:focus, .form-group select:focus {
-  border-color: var(--color-emerald);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+  background: var(--color-primary);
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  margin-top: 10px;
 }
 
 .btn-secondary {
-  background: #f1f5f9;
-  color: var(--text-main);
-  border: none;
+  background: white;
+  color: black;
+  border: var(--border-thick);
   padding: 10px 20px;
   border-radius: var(--radius-sm);
-  font-weight: 600;
+  font-weight: 800;
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.1s, box-shadow 0.1s;
+  text-transform: uppercase;
 }
 
-.btn-secondary:hover { background: #e2e8f0; }
+.btn-secondary:hover { 
+  background: #f1f5f9;
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-md);
+}
+.btn-secondary:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
 </style>

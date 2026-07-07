@@ -20,8 +20,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="dashboard-container">
-    <aside class="sidebar glass">
+  <div class="layout">
+    <aside class="sidebar">
       <div class="sidebar-header">
         <h2 class="brand">Ma<span class="text-emerald">Kasir</span></h2>
         <div class="user-info">
@@ -87,75 +87,72 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.dashboard-container {
+.layout {
   display: flex;
-  height: 100vh;
-  width: 100vw;
+  flex: 1;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   background-color: var(--bg-light);
 }
 
 .sidebar {
   width: 260px;
-  background: var(--bg-sidebar);
-  color: #fff;
+  flex-shrink: 0;
+  background-color: var(--bg-sidebar);
+  color: #000;
   display: flex;
   flex-direction: column;
-  padding: 20px 0;
-  transition: all 0.3s ease;
-  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
+  border-right: var(--border-thick);
   z-index: 10;
 }
 
-.glass {
-  /* Opsi glassmorphism */
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(10px);
-}
-
 .sidebar-header {
-  padding: 0 20px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-bottom: var(--border-thick);
 }
 
 .brand {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #ffffff;
+  color: #000;
   margin-bottom: 15px;
   letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .text-emerald {
-  color: var(--color-emerald);
+  color: var(--color-danger);
 }
 
 .user-info {
-  background: rgba(255, 255, 255, 0.05);
+  background: white;
   padding: 10px 15px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
+  border: var(--border-thick);
+  box-shadow: var(--shadow-sm);
 }
 
 .role {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--color-emerald);
-  font-weight: 700;
+  color: var(--color-danger);
+  font-weight: 800;
   margin-bottom: 3px;
 }
 
 .username {
   font-size: 0.9rem;
-  font-weight: 500;
-  color: #e2e8f0;
+  font-weight: 800;
+  color: #000;
 }
 
 .sidebar-nav {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 10px;
   padding: 20px 15px;
   overflow-y: auto;
 }
@@ -165,28 +162,31 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   padding: 12px 15px;
-  color: #cbd5e1;
+  color: #000;
   text-decoration: none;
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  transition: all 0.2s ease;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  border: var(--border-thick);
+  background: white;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: var(--shadow-sm);
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  transform: translateX(4px);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-md);
+  background: var(--color-primary);
 }
 
 .nav-item.router-link-active {
-  background: var(--color-emerald);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  background: var(--color-accent);
+  box-shadow: var(--shadow-sm);
 }
 
 .sidebar-footer {
-  padding: 20px 15px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px 15px 20px;
+  border-top: var(--border-thick);
+  background: var(--bg-sidebar);
 }
 
 .btn-logout {
@@ -196,18 +196,20 @@ onMounted(() => {
   justify-content: center;
   gap: 10px;
   padding: 12px;
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: var(--radius-md);
-  font-weight: 600;
+  background: var(--color-danger);
+  color: #fff;
+  border: var(--border-thick);
+  border-radius: var(--radius-sm);
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: var(--shadow-sm);
+  text-transform: uppercase;
 }
 
 .btn-logout:hover {
-  background: #ef4444;
-  color: #fff;
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px #000;
 }
 
 .main-content {
@@ -218,20 +220,21 @@ onMounted(() => {
 }
 
 .topbar {
-  background: #fff;
+  background: white;
   padding: 20px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  border-bottom: var(--border-thick);
   z-index: 5;
 }
 
 .topbar h1 {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 800;
   color: var(--text-main);
   margin: 0;
+  text-transform: uppercase;
 }
 
 .content-wrapper {

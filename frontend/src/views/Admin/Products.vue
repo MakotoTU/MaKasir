@@ -211,34 +211,38 @@ onMounted(() => {
 .btn-sm {
   padding: 6px 12px;
   font-size: 0.85rem;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  background: white;
+  border: var(--border-thick);
   border-radius: var(--radius-sm);
   cursor: pointer;
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.1s, box-shadow 0.1s;
+  color: black;
+  text-transform: uppercase;
 }
 
 .btn-sm:hover {
-  background: #e2e8f0;
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-md);
+  background: var(--color-primary);
 }
 
 .btn-danger-outline {
-  color: #ef4444;
-  background: white;
-  border-color: #f87171;
+  color: var(--color-danger);
 }
 
 .btn-danger-outline:hover {
-  background: #fef2f2;
-  border-color: #ef4444;
+  background: var(--color-danger);
+  color: white;
 }
 
 .empty-state {
   text-align: center;
   padding: 30px;
-  color: var(--text-muted);
+  color: black;
+  font-weight: 800;
 }
-
-
 
 .form-group {
   display: flex;
@@ -248,8 +252,9 @@ onMounted(() => {
 
 .form-group label {
   font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-main);
+  font-weight: 800;
+  color: black;
+  text-transform: uppercase;
 }
 
 .modal-actions {
@@ -260,12 +265,18 @@ onMounted(() => {
 }
 
 .btn-secondary {
-  background: #f1f5f9;
-  color: var(--text-main);
+  background: white;
+  color: black;
+  border: var(--border-thick);
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.1s, box-shadow 0.1s;
 }
 
 .btn-secondary:hover {
-  background: #e2e8f0;
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-md);
+  background: #f1f5f9;
 }
 
 .form-row {
@@ -276,12 +287,14 @@ onMounted(() => {
 
 .stock-badge {
   display: inline-block;
-  padding: 3px 10px;
-  border-radius: 999px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 800;
+  border: 2px solid #000;
+  text-transform: uppercase;
 }
-.stock-ok { background: #dcfce7; color: #16a34a; }
-.stock-low { background: #fef9c3; color: #92400e; }
-.stock-empty { background: #fee2e2; color: #dc2626; }
+.stock-ok { background: var(--color-emerald); color: white; }
+.stock-low { background: var(--color-primary); color: black; }
+.stock-empty { background: var(--color-danger); color: white; }
 </style>

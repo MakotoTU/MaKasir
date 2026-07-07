@@ -113,7 +113,7 @@ onUnmounted(() => {
   justify-content: center;
   min-height: 100vh;
   width: 100vw;
-  background: var(--bg-sidebar);
+  background: var(--color-accent);
   padding: 20px;
 }
 
@@ -121,6 +121,10 @@ onUnmounted(() => {
   width: 100%;
   max-width: 400px;
   padding: 40px 30px;
+  background: white;
+  border: var(--border-thick);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
 }
 
 .brand-header {
@@ -129,18 +133,20 @@ onUnmounted(() => {
 }
 
 .brand-header h2 {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 800;
   margin-bottom: 5px;
+  text-transform: uppercase;
 }
 
 .text-emerald {
-  color: var(--color-emerald);
+  color: var(--color-danger);
 }
 
 .subtitle {
-  color: var(--text-muted);
+  color: black;
   font-size: 0.95rem;
+  font-weight: 800;
 }
 
 .form-group {
@@ -152,7 +158,8 @@ onUnmounted(() => {
 
 .form-group label {
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .btn-block {
@@ -165,14 +172,18 @@ onUnmounted(() => {
 .wa-status {
   margin-top: 30px;
   padding: 20px;
-  border-radius: var(--radius-md);
-  background: var(--bg-light);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
   text-align: center;
+  border: var(--border-thick);
+  box-shadow: var(--shadow-sm);
 }
 
 .wa-status h4 {
   font-size: 0.9rem;
   margin-bottom: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .qr-container {
@@ -186,10 +197,15 @@ onUnmounted(() => {
   width: 200px;
   height: 200px;
   border-radius: var(--radius-sm);
+  border: 2px solid #000;
 }
 
 .success-text {
   color: var(--color-emerald);
-  font-weight: 600;
+  font-weight: 800;
+  background: white;
+  padding: 5px 10px;
+  border: 2px solid #000;
+  display: inline-block;
 }
 </style>
