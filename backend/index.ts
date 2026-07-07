@@ -4,6 +4,7 @@ import { connectDB } from './config/db';
 import { ProductController } from './controllers/ProductController';
 import { OrderController } from './controllers/OrderController';
 import { AuthController } from './controllers/AuthController';
+import { ExpenseController } from './controllers/ExpenseController';
 import { Order, OrderItem, User } from './models';
 import { eventEmitter, EVENTS } from './services/event.service';
 import { waService } from './services/whatsapp.service'; // Start WA Service on boot
@@ -134,10 +135,30 @@ const app = new Elysia()
       body: t.Object({
         cashierId: t.Number(),
         clientUuid: t.Optional(t.String()),
+        paymentMethod: t.Optional(t.Union([t.Literal('cash'), t.Literal('qris')])),
+        amountPaid: t.Optional(t.Number({ minimum: 0 })),
         items: t.Array(t.Object({
           productId: t.Number(),
           qty: t.Number({ minimum: 1 })
         }), { minItems: 1 })
+      })
+    })
+
+    // Endpoint Expenses (Read & Create — semua user terautentikasi)
+    .get('/expenses', async () => await ExpenseController.getAll())
+    .post('/expenses', async ({ body, set, user }: any) => {
+      try {
+        const userId = user?.id;
+        return await ExpenseController.create(body, userId);
+      } catch (e: any) {
+        set.status = 400;
+        return { error: e.message };
+      }
+    }, {
+      body: t.Object({
+        description: t.String(),
+        amount: t.Number({ minimum: 1 }),
+        category: t.Optional(t.String())
       })
     })
   )
@@ -197,10 +218,36 @@ const app = new Elysia()
       body: t.Object({
         name: t.Optional(t.String()),
         price: t.Optional(t.Number({ minimum: 0 })),
-        category: t.Optional(t.String())
+        category: t.Optional(t.String()),
+        stock: t.Optional(t.Number({ minimum: 0 })),
+        minimumStock: t.Optional(t.Number({ minimum: 0 }))
       })
     })
     .delete('/products/:id', async ({ params: { id } }) => await ProductController.delete(id))
+
+    // Endpoint Expenses (Edit & Delete — hanya Admin)
+    .put('/expenses/:id', async ({ params: { id }, body, set }) => {
+      try {
+        return await ExpenseController.update(id, body);
+      } catch (e: any) {
+        set.status = 400;
+        return { error: e.message };
+      }
+    }, {
+      body: t.Object({
+        description: t.Optional(t.String()),
+        amount: t.Optional(t.Number({ minimum: 1 })),
+        category: t.Optional(t.String())
+      })
+    })
+    .delete('/expenses/:id', async ({ params: { id }, set }) => {
+      try {
+        return await ExpenseController.delete(id);
+      } catch (e: any) {
+        set.status = 400;
+        return { error: e.message };
+      }
+    })
 
     // Endpoint WA Logout
     .post('/admin/wa/logout', async ({ set }) => {

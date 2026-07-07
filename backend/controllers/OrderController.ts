@@ -1,10 +1,11 @@
 import { Order, Product, OrderItem, User } from '../models';
 import { eventEmitter, EVENTS } from '../services/event.service';
 import { sequelize } from '../config/db';
+import { Op } from 'sequelize';
 
 export class OrderController {
   static async createOrder(data: any) {
-    const { items, cashierId, clientUuid } = data;
+    const { items, cashierId, clientUuid, paymentMethod = 'cash', amountPaid } = data;
 
     // Idempotency check: jika clientUuid sudah ada di DB, langsung kembalikan data pesanan tersebut
     if (clientUuid) {
@@ -19,7 +20,8 @@ export class OrderController {
     }
 
     let totalPrice = 0;
-    
+    const affectedProducts: Product[] = [];
+
     // Gunakan transaction untuk menjamin data integrity
     const transaction = await sequelize.transaction();
 
@@ -29,6 +31,7 @@ export class OrderController {
         status: 'selesai',
         whatsappStatus: 'pending',
         cashierId,
+        paymentMethod,
         ...(clientUuid ? { clientUuid } : {})
       }, { transaction });
 
@@ -38,6 +41,22 @@ export class OrderController {
         const product = await Product.findByPk(item.productId, { transaction });
         if (!product) {
           throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan`);
+        }
+
+        // Atomic decrement stok — mencegah race condition
+        const [rowsUpdated] = await Product.update(
+          { stock: sequelize.literal(`stock - ${item.qty}`) },
+          {
+            where: {
+              id: product.id,
+              stock: { [Op.gte]: item.qty }
+            },
+            transaction
+          }
+        );
+
+        if (rowsUpdated === 0) {
+          throw new Error(`Stok produk "${product.name}" tidak mencukupi. Sisa stok: ${product.stock}`);
         }
 
         const itemTotal = product.price * item.qty;
@@ -50,16 +69,36 @@ export class OrderController {
           price: product.price,
           qty: item.qty
         });
+
+        // Simpan referensi produk untuk dicek setelah commit
+        affectedProducts.push(product);
       }
 
       await OrderItem.bulkCreate(orderItems, { transaction });
-      
+
       order.totalPrice = totalPrice;
+
+      // Hitung kembalian untuk pembayaran tunai
+      if (paymentMethod === 'cash') {
+        if (amountPaid == null || amountPaid < totalPrice) {
+          throw new Error(`Uang yang diterima tidak mencukupi total belanja (${totalPrice})`);
+        }
+        order.amountPaid = amountPaid;
+        order.changeDue = amountPaid - totalPrice;
+      }
+
       await order.save({ transaction });
-      
       await transaction.commit();
 
-      // Emit object dengan data yang diperlukan
+      // Reload stok terbaru dan emit STOCK_LOW jika stok menipis
+      for (const product of affectedProducts) {
+        const updatedProduct = await Product.findByPk(product.id);
+        if (updatedProduct && updatedProduct.stock <= updatedProduct.minimumStock) {
+          eventEmitter.emit(EVENTS.STOCK_LOW, updatedProduct);
+        }
+      }
+
+      // Emit event ORDER_CREATED untuk notifikasi WA dan KDS
       const orderData = await Order.findByPk(order.id, {
         include: [{ model: OrderItem, as: 'items' }, { model: User, as: 'cashier' }]
       });

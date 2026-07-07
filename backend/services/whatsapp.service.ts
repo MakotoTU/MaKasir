@@ -111,10 +111,18 @@ export class WhatsAppService {
 
         const itemsList = order.items.map((item: any) => `- ${item.name} (${item.qty}x) = ${formatRupiah(item.price * item.qty)}`).join('\n');
         
+        // Baris pembayaran
+        let paymentInfo = `Metode: ${order.paymentMethod === 'qris' ? 'QRIS' : 'Tunai'}`;
+        if (order.paymentMethod === 'cash' && order.amountPaid != null) {
+          paymentInfo += `\nUang Diterima: ${formatRupiah(order.amountPaid)}`;
+          paymentInfo += `\nKembalian: ${formatRupiah(order.changeDue ?? 0)}`;
+        }
+
         const message = `Halo Kasir! Pesanan Baru Masuk.\n\n` +
                         `Berikut rincian pesanan pelanggan:\n` +
                         `${itemsList}\n\n` +
-                        `Total: ${formatRupiah(order.totalPrice)}\n\n` +
+                        `Total: ${formatRupiah(order.totalPrice)}\n` +
+                        `${paymentInfo}\n\n` +
                         `Waktu: ${new Date().toLocaleString()}`;
 
         // Kirim ke nomor WA yang terhubung (dirinya sendiri)
@@ -137,6 +145,30 @@ export class WhatsAppService {
         console.log(`WhatsApp notification for order #${order.id} handled. Status: ${order.whatsappStatus}`);
       } catch (e) {
         console.error('Failed to process ORDER_CREATED event in WhatsAppService:', e);
+      }
+    });
+
+    // Dengarkan event STOCK_LOW untuk notifikasi stok menipis
+    eventEmitter.on(EVENTS.STOCK_LOW, async (product: any) => {
+      try {
+        if (!this.isConnected || !this.sock?.user?.id) return;
+
+        const formatRupiah = (angka: number) =>
+          new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+
+        const message = `⚠️ *Peringatan Stok Menipis!*\n\n` +
+                        `Produk: *${product.name}*\n` +
+                        `Harga: ${formatRupiah(product.price)}\n` +
+                        `Stok Saat Ini: *${product.stock} pcs*\n` +
+                        `Minimum Stok: ${product.minimumStock} pcs\n\n` +
+                        `Segera lakukan restok sebelum kehabisan!`;
+
+        const myJid = this.sock.user.id;
+        const targetJid = myJid.split(':')[0] + '@s.whatsapp.net';
+        await this.sendMessage(targetJid, message);
+        console.log(`⚠️ Notifikasi stok menipis terkirim untuk produk: ${product.name}`);
+      } catch (e) {
+        console.error('Failed to process STOCK_LOW event in WhatsAppService:', e);
       }
     });
   }

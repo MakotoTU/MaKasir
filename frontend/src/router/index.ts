@@ -7,6 +7,7 @@ import AdminProducts from '../views/Admin/Products.vue'
 import AdminUsers from '../views/Admin/Users.vue'
 import AdminWhatsApp from '../views/Admin/WhatsAppStatus.vue'
 import KitchenView from '../views/KitchenView.vue'
+import Expenses from '../views/Expenses.vue'
 import { useAuthStore } from '../store/auth'
 
 const router = createRouter({
@@ -64,6 +65,11 @@ const router = createRouter({
           path: 'kitchen',
           name: 'kitchen',
           component: KitchenView
+        },
+        {
+          path: 'expenses',
+          name: 'expenses',
+          component: Expenses
         }
       ]
     }

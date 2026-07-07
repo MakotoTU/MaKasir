@@ -12,11 +12,13 @@ const showModal = ref(false)
 const isLoadingData = ref(false)
 const isSaving = ref(false)
 
-const form = ref<Partial<Product>>({
+const form = ref<Partial<Product>>({ 
   id: undefined,
   name: '',
   price: 0,
-  category: ''
+  category: '',
+  stock: 0,
+  minimumStock: 5
 })
 
 const fetchProducts = async () => {
@@ -35,7 +37,7 @@ const fetchProducts = async () => {
 
 const openAddModal = () => {
   isEditing.value = false
-  form.value = { id: undefined, name: '', price: 0, category: '' }
+  form.value = { id: undefined, name: '', price: 0, category: '', stock: 0, minimumStock: 5 }
   showModal.value = true
 }
 
@@ -113,21 +115,31 @@ onMounted(() => {
             <th>Nama Produk</th>
             <th>Kategori</th>
             <th>Harga</th>
+            <th>Stok</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="isLoadingData">
-            <td colspan="5" class="empty-state">Memuat data...</td>
+            <td colspan="6" class="empty-state">Memuat data...</td>
           </tr>
           <tr v-else-if="products.length === 0">
-            <td colspan="5" class="empty-state">Belum ada produk.</td>
+            <td colspan="6" class="empty-state">Belum ada produk.</td>
           </tr>
           <tr v-else v-for="p in products" :key="p.id">
             <td>#{{ p.id }}</td>
             <td><strong>{{ p.name }}</strong></td>
             <td>{{ p.category }}</td>
             <td>{{ formatRupiah(p.price) }}</td>
+            <td>
+              <span class="stock-badge" :class="{
+                'stock-ok': p.stock > p.minimumStock,
+                'stock-low': p.stock <= p.minimumStock && p.stock > 0,
+                'stock-empty': p.stock === 0
+              }">
+                {{ p.stock }} pcs
+              </span>
+            </td>
             <td class="actions">
               <button class="btn btn-sm" @click="openEditModal(p)">Edit</button>
               <button class="btn btn-sm btn-danger-outline" @click="deleteProduct(p.id)">Hapus</button>
@@ -156,6 +168,17 @@ onMounted(() => {
       <div class="form-group">
         <label>Harga (Rp)</label>
         <input v-model="form.price" type="number" min="0" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Stok Awal (pcs)</label>
+          <input v-model="form.stock" type="number" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Minimum Stok (pcs)</label>
+          <input v-model="form.minimumStock" type="number" min="0" />
+        </div>
       </div>
 
       <div class="modal-actions">
@@ -244,4 +267,21 @@ onMounted(() => {
 .btn-secondary:hover {
   background: #e2e8f0;
 }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stock-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.stock-ok { background: #dcfce7; color: #16a34a; }
+.stock-low { background: #fef9c3; color: #92400e; }
+.stock-empty { background: #fee2e2; color: #dc2626; }
 </style>

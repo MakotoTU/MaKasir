@@ -15,6 +15,14 @@ const cart = ref<CartItem[]>([])
 const isLoadingProducts = ref(false)
 const isCheckingOut = ref(false)
 
+// Payment
+const paymentMethod = ref<'cash' | 'qris'>('cash')
+const amountPaid = ref<number | null>(null)
+const changeDue = computed(() => {
+  if (paymentMethod.value !== 'cash' || amountPaid.value == null) return null
+  return amountPaid.value - totalCart.value
+})
+
 // Filters
 const searchQuery = ref('')
 const selectedCategory = ref('Semua')
@@ -105,12 +113,23 @@ const checkout = async () => {
     }
 
     // Mode Online: kirim langsung ke server
+    const payload: any = {
+      items: cart.value,
+      cashierId: auth.user.id,
+      paymentMethod: paymentMethod.value
+    }
+    if (paymentMethod.value === 'cash') {
+      if (!amountPaid.value || amountPaid.value < totalCart.value) {
+        alert('Masukkan jumlah uang yang diterima (minimal sama dengan total belanja)')
+        isCheckingOut.value = false
+        return
+      }
+      payload.amountPaid = amountPaid.value
+    }
+
     const res = await apiFetch('/api/orders', {
       method: 'POST',
-      body: JSON.stringify({
-        items: cart.value,
-        cashierId: auth.user.id
-      })
+      body: JSON.stringify(payload)
     })
 
     if (!res.ok) {
@@ -120,6 +139,8 @@ const checkout = async () => {
 
     alert('Order berhasil disimpan dan pesan WA akan segera dikirim!')
     cart.value = []
+    amountPaid.value = null
+    paymentMethod.value = 'cash'
   } catch (err: any) {
     // Jika error karena koneksi, save ke offline juga
     if (!navigator.onLine || err.message?.includes('fetch')) {
@@ -215,6 +236,38 @@ onMounted(() => {
             <span>Total Tagihan</span>
             <span class="total-amount">{{ formatRupiah(totalCart) }}</span>
           </div>
+
+          <!-- Pilihan Metode Pembayaran -->
+          <div class="payment-method">
+            <button
+              class="pay-btn"
+              :class="{ active: paymentMethod === 'cash' }"
+              @click="paymentMethod = 'cash'; amountPaid = null"
+            >💵 Tunai</button>
+            <button
+              class="pay-btn"
+              :class="{ active: paymentMethod === 'qris' }"
+              @click="paymentMethod = 'qris'; amountPaid = null"
+            >📱 QRIS</button>
+          </div>
+
+          <!-- Input Uang Diterima (hanya untuk tunai) -->
+          <div class="cash-input" v-if="paymentMethod === 'cash'">
+            <label>Uang Diterima (Rp)</label>
+            <input
+              v-model.number="amountPaid"
+              type="number"
+              :min="totalCart"
+              placeholder="Masukkan nominal..."
+            />
+            <div class="change-display" v-if="changeDue !== null">
+              <span>Kembalian:</span>
+              <span class="change-amount" :class="{ 'change-negative': changeDue < 0 }">
+                {{ formatRupiah(changeDue) }}
+              </span>
+            </div>
+          </div>
+
           <button class="btn btn-primary btn-block btn-checkout" @click="checkout" :disabled="cart.length === 0 || isCheckingOut">
             {{ isCheckingOut ? 'Memproses...' : 'Proses Pembayaran' }}
           </button>
@@ -560,4 +613,74 @@ onMounted(() => {
     border-top: 1px solid #e2e8f0;
   }
 }
+
+.payment-method {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.pay-btn {
+  padding: 10px;
+  border-radius: var(--radius-md);
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-muted);
+}
+
+.pay-btn:hover { border-color: var(--color-emerald); color: var(--color-emerald); }
+.pay-btn.active {
+  border-color: var(--color-emerald);
+  background: rgba(16, 185, 129, 0.08);
+  color: #047857;
+}
+
+.cash-input {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cash-input label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.cash-input input {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #cbd5e1;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.cash-input input:focus {
+  border-color: var(--color-emerald);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.change-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border-radius: var(--radius-sm);
+  border: 1px solid #bbf7d0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.change-amount { color: #047857; font-size: 1rem; font-weight: 800; }
+.change-negative { color: #dc2626; }
 </style>

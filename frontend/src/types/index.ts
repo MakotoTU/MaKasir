@@ -3,6 +3,8 @@ export interface Product {
   name: string
   price: number
   category: string
+  stock: number
+  minimumStock: number
 }
 
 export interface User {
@@ -24,6 +26,9 @@ export interface Order {
   totalPrice: number
   status: string
   whatsappStatus: string
+  paymentMethod: string
+  amountPaid?: number
+  changeDue?: number
   createdAt: string
   cashier?: {
     username: string

@@ -57,6 +57,9 @@ onMounted(() => {
         <router-link to="/kitchen" class="nav-item">
           <span class="icon">🍳</span> Tampilan Dapur
         </router-link>
+        <router-link to="/expenses" class="nav-item">
+          <span class="icon">💸</span> Pengeluaran
+        </router-link>
       </nav>
 
       <div class="sidebar-footer">

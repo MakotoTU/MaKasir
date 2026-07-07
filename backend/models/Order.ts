@@ -8,6 +8,9 @@ export class Order extends Model {
   declare whatsappStatus: string;
   declare cashierId: number;
   declare clientUuid?: string;
+  declare paymentMethod: string;
+  declare amountPaid?: number;
+  declare changeDue?: number;
   declare createdAt: Date;
   declare items?: any[];
   declare cashier?: any;
@@ -34,6 +37,19 @@ Order.init({
   clientUuid: {
     type: DataTypes.STRING(36),
     unique: true,
+    allowNull: true
+  },
+  paymentMethod: {
+    type: DataTypes.STRING,
+    defaultValue: 'cash',
+    allowNull: false
+  },
+  amountPaid: {
+    type: DataTypes.FLOAT,
+    allowNull: true
+  },
+  changeDue: {
+    type: DataTypes.FLOAT,
     allowNull: true
   }
 }, {
