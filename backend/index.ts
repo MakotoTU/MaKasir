@@ -123,6 +123,32 @@ const app = new Elysia()
 
     // Endpoint Order (Read & Write)
     .get('/orders', async () => await OrderController.getHistory())
+    .post('/orders/summary/send-wa', async ({ body, set }) => {
+      try {
+        if (!body.date) throw new Error('Parameter "date" is required');
+        return await OrderController.sendCsvWA(body.date);
+      } catch (e: any) {
+        set.status = 400;
+        return { error: e.message };
+      }
+    }, {
+      body: t.Object({
+        date: t.String()
+      })
+    })
+    .get('/orders/summary', async ({ query: { date }, set }) => {
+      try {
+        if (!date) throw new Error('Query parameter "date" (YYYY-MM-DD) is required');
+        return await OrderController.getSummary(date);
+      } catch (e: any) {
+        set.status = 400;
+        return { error: e.message };
+      }
+    }, {
+      query: t.Object({
+        date: t.Optional(t.String())
+      })
+    })
     .get('/orders/:id', async ({ params: { id } }) => await OrderController.getById(id))
     .post('/orders', async ({ body, set }) => {
       try {
@@ -218,9 +244,7 @@ const app = new Elysia()
       body: t.Object({
         name: t.Optional(t.String()),
         price: t.Optional(t.Number({ minimum: 0 })),
-        category: t.Optional(t.String()),
-        stock: t.Optional(t.Number({ minimum: 0 })),
-        minimumStock: t.Optional(t.Number({ minimum: 0 }))
+        category: t.Optional(t.String())
       })
     })
     .delete('/products/:id', async ({ params: { id } }) => await ProductController.delete(id))

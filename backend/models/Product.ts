@@ -6,8 +6,6 @@ export class Product extends Model {
   declare name: string;
   declare price: number;
   declare category: string;
-  declare stock: number;
-  declare minimumStock: number;
 }
 
 Product.init({
@@ -26,16 +24,6 @@ Product.init({
   },
   category: {
     type: DataTypes.STRING
-  },
-  stock: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-    allowNull: false
-  },
-  minimumStock: {
-    type: DataTypes.INTEGER,
-    defaultValue: 5,
-    allowNull: false
   }
 }, {
   sequelize,

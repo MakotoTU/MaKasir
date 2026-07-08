@@ -2,6 +2,7 @@ import { Order, Product, OrderItem, User } from '../models';
 import { eventEmitter, EVENTS } from '../services/event.service';
 import { sequelize } from '../config/db';
 import { Op } from 'sequelize';
+import { waService } from '../services/whatsapp.service';
 
 export class OrderController {
   static async createOrder(data: any) {
@@ -20,7 +21,6 @@ export class OrderController {
     }
 
     let totalPrice = 0;
-    const affectedProducts: Product[] = [];
 
     // Gunakan transaction untuk menjamin data integrity
     const transaction = await sequelize.transaction();
@@ -43,22 +43,6 @@ export class OrderController {
           throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan`);
         }
 
-        // Atomic decrement stok — mencegah race condition
-        const [rowsUpdated] = await Product.update(
-          { stock: sequelize.literal(`stock - ${item.qty}`) },
-          {
-            where: {
-              id: product.id,
-              stock: { [Op.gte]: item.qty }
-            },
-            transaction
-          }
-        );
-
-        if (rowsUpdated === 0) {
-          throw new Error(`Stok produk "${product.name}" tidak mencukupi. Sisa stok: ${product.stock}`);
-        }
-
         const itemTotal = product.price * item.qty;
         totalPrice += itemTotal;
 
@@ -69,9 +53,6 @@ export class OrderController {
           price: product.price,
           qty: item.qty
         });
-
-        // Simpan referensi produk untuk dicek setelah commit
-        affectedProducts.push(product);
       }
 
       await OrderItem.bulkCreate(orderItems, { transaction });
@@ -89,14 +70,6 @@ export class OrderController {
 
       await order.save({ transaction });
       await transaction.commit();
-
-      // Reload stok terbaru dan emit STOCK_LOW jika stok menipis
-      for (const product of affectedProducts) {
-        const updatedProduct = await Product.findByPk(product.id);
-        if (updatedProduct && updatedProduct.stock <= updatedProduct.minimumStock) {
-          eventEmitter.emit(EVENTS.STOCK_LOW, updatedProduct);
-        }
-      }
 
       // Emit event ORDER_CREATED untuk notifikasi WA dan KDS
       const orderData = await Order.findByPk(order.id, {
@@ -122,5 +95,106 @@ export class OrderController {
     return await Order.findByPk(id, {
       include: [{ model: User, as: 'cashier', attributes: ['username'] }, { model: OrderItem, as: 'items' }]
     });
+  }
+
+  static async getSummary(date: string) {
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const orders = await Order.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [startDate, endDate]
+        },
+        status: 'selesai'
+      },
+      include: [{ model: OrderItem, as: 'items' }]
+    });
+
+    let totalRevenue = 0;
+    let cashTotal = 0;
+    let qrisTotal = 0;
+    const itemsSold: Record<string, { name: string, qty: number, revenue: number }> = {};
+
+    orders.forEach(order => {
+      totalRevenue += order.totalPrice;
+      if (order.paymentMethod === 'cash') cashTotal += order.totalPrice;
+      if (order.paymentMethod === 'qris') qrisTotal += order.totalPrice;
+
+      if (order.items) {
+        order.items.forEach(item => {
+          if (!itemsSold[item.productId]) {
+            itemsSold[item.productId] = { name: item.name, qty: 0, revenue: 0 };
+          }
+          itemsSold[item.productId].qty += item.qty;
+          itemsSold[item.productId].revenue += (item.price * item.qty);
+        });
+      }
+    });
+
+    const products = Object.values(itemsSold).sort((a, b) => b.qty - a.qty);
+
+    return {
+      date,
+      totalOrders: orders.length,
+      totalRevenue,
+      cashTotal,
+      qrisTotal,
+      products
+    };
+  }
+
+  static async sendCsvWA(date: string) {
+    const startOfDay = new Date(`${date}T00:00:00.000Z`);
+    const endOfDay = new Date(`${date}T23:59:59.999Z`);
+
+    const orders = await Order.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [startOfDay, endOfDay]
+        },
+        status: 'selesai'
+      },
+      include: [{ model: OrderItem, as: 'items' }],
+      order: [['createdAt', 'ASC']]
+    });
+
+    if (orders.length === 0) {
+      throw new Error(`Tidak ada transaksi pada tanggal ${date}`);
+    }
+
+    const headers = ['Waktu', 'ID Pesanan', 'Total Belanja', 'Metode Pembayaran', 'Uang Diterima', 'Kembalian', 'Item Terjual'];
+    const rows = orders.map(order => {
+      const waktu = new Date(order.createdAt).toLocaleString('id-ID').replace(/,/g, '');
+      const itemNames = (order.items || []).map((i: any) => `${i.name}(${i.qty})`).join(' | ');
+      return [
+        waktu,
+        order.id,
+        order.totalPrice,
+        order.paymentMethod,
+        order.amountPaid ?? 0,
+        order.changeDue ?? 0,
+        `"${itemNames}"`
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const buffer = Buffer.from(csvContent, 'utf-8');
+
+    const myJid = waService.getMyJid();
+    if (!myJid) {
+      throw new Error('Sesi WhatsApp belum terhubung');
+    }
+
+    const caption = `Halo Kasir! Ini adalah rekapitulasi penjualan warung secara rinci untuk tanggal ${date}. File terlampir.`;
+    const success = await waService.sendDocument(myJid, buffer, `Rekap_Penjualan_${date}.csv`, caption);
+
+    if (!success) {
+      throw new Error('Gagal mengirim dokumen melalui WhatsApp');
+    }
+    
+    return { success: true, message: 'Berhasil mengirim rekap CSV ke WA' };
   }
 }

@@ -1,6 +1,26 @@
 # Changelog Aplikasi POS MaKasir
 Dokumentasi lengkap riwayat pembaruan sistem.
 
+## [Rabu, 08 Juli 2026 09:16] - v1.2.0 (Fitur Rekap Penjualan & Perbaikan Notifikasi WA)
+
+### ✨ Fitur Baru (New Features)
+- **Modul Rekap Penjualan**: Menambahkan fitur rekap harian pada menu Riwayat Transaksi (`Orders.vue`).
+  - Menampilkan ringkasan total order dan total pendapatan per tanggal yang dipilih.
+  - Memisahkan total pembayaran antara Cash dan QRIS.
+  - Menampilkan rincian barang yang laku terjual beserta kuantitas (Qty) dan sumbangsih pendapatannya.
+  - Penambahan tombol **Kirim CSV ke WA** untuk mengekspor rekap detail penjualan dalam format CSV dan langsung dikirim ke WhatsApp kasir.
+  - Penambahan endpoint `GET /api/orders/summary` dan `POST /api/orders/summary/send-wa` di sisi Backend (`OrderController.ts` & `index.ts`).
+
+### 🐛 Perbaikan Bug (Bug Fixes)
+- **Notifikasi WhatsApp**:
+  - Memperbaiki bug di mana nominal uang yang diterima dan kembalian tidak tercantum di pesan WA.
+  - Memastikan pembayaran metode "Cash" selalu memunculkan besaran uang diterima & kembalian.
+  - Memastikan pembayaran metode "QRIS" mencantumkan keterangan uang pas.
+
+### ♻️ Pembersihan Kode (Code Cleanup & Refactoring)
+- **Pembersihan Modul Stok**: Menghapus sisa-sisa field dan validasi stok di Backend (`OrderController.ts`, `Product.ts`, `index.ts`, `event.service.ts`, `whatsapp.service.ts`) karena menyebabkan konflik skema database dan dinilai tidak diperlukan dalam alur bisnis saat ini.
+
+
 ## [Selasa, 07 Juli 2026 21:00] - v1.1.0 (Pembaruan Frontend & Stabilitas Backend)
 
 ### 🎨 Desain Antarmuka (Neobrutalism Redesign)

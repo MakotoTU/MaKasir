@@ -97,6 +97,31 @@ export class WhatsAppService {
     }
   }
 
+  public async sendDocument(to: string, documentBuffer: Buffer, fileName: string, caption: string = '') {
+    if (!this.isConnected) {
+      console.error('WhatsApp is not connected. Cannot send document to:', to);
+      return false;
+    }
+    try {
+      const jid = to.includes('@s.whatsapp.net') ? to : `${to}@s.whatsapp.net`;
+      await this.sock.sendMessage(jid, { 
+        document: documentBuffer, 
+        mimetype: 'text/csv', 
+        fileName, 
+        caption 
+      });
+      return true;
+    } catch (error) {
+      console.error('Error sending WhatsApp document:', error);
+      return false;
+    }
+  }
+
+  public getMyJid(): string | null {
+    if (!this.sock?.user?.id) return null;
+    return this.sock.user.id.split(':')[0] + '@s.whatsapp.net';
+  }
+
   private setupEventListeners() {
     // Dengarkan event order_created dari module order
     eventEmitter.on(EVENTS.ORDER_CREATED, async (order: any) => {
@@ -113,9 +138,12 @@ export class WhatsAppService {
         
         // Baris pembayaran
         let paymentInfo = `Metode: ${order.paymentMethod === 'qris' ? 'QRIS' : 'Tunai'}`;
-        if (order.paymentMethod === 'cash' && order.amountPaid != null) {
-          paymentInfo += `\nUang Diterima: ${formatRupiah(order.amountPaid)}`;
-          paymentInfo += `\nKembalian: ${formatRupiah(order.changeDue ?? 0)}`;
+        if (order.paymentMethod === 'cash') {
+          paymentInfo += `\nUang Diterima: ${order.amountPaid != null ? formatRupiah(order.amountPaid) : '-'}`;
+          paymentInfo += `\nKembalian: ${order.changeDue != null ? formatRupiah(order.changeDue) : '-'}`;
+        } else {
+          paymentInfo += `\nUang Diterima: ${formatRupiah(order.totalPrice)} (Pas)`;
+          paymentInfo += `\nKembalian: Rp0`;
         }
 
         const message = `Halo Kasir! Pesanan Baru Masuk.\n\n` +
@@ -145,30 +173,6 @@ export class WhatsAppService {
         console.log(`WhatsApp notification for order #${order.id} handled. Status: ${order.whatsappStatus}`);
       } catch (e) {
         console.error('Failed to process ORDER_CREATED event in WhatsAppService:', e);
-      }
-    });
-
-    // Dengarkan event STOCK_LOW untuk notifikasi stok menipis
-    eventEmitter.on(EVENTS.STOCK_LOW, async (product: any) => {
-      try {
-        if (!this.isConnected || !this.sock?.user?.id) return;
-
-        const formatRupiah = (angka: number) =>
-          new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-
-        const message = `⚠️ *Peringatan Stok Menipis!*\n\n` +
-                        `Produk: *${product.name}*\n` +
-                        `Harga: ${formatRupiah(product.price)}\n` +
-                        `Stok Saat Ini: *${product.stock} pcs*\n` +
-                        `Minimum Stok: ${product.minimumStock} pcs\n\n` +
-                        `Segera lakukan restok sebelum kehabisan!`;
-
-        const myJid = this.sock.user.id;
-        const targetJid = myJid.split(':')[0] + '@s.whatsapp.net';
-        await this.sendMessage(targetJid, message);
-        console.log(`⚠️ Notifikasi stok menipis terkirim untuk produk: ${product.name}`);
-      } catch (e) {
-        console.error('Failed to process STOCK_LOW event in WhatsAppService:', e);
       }
     });
   }

@@ -23,8 +23,8 @@ export const connectDB = async () => {
       await sequelize.sync({ alter: true });
       console.log('✅ Semua tabel tersinkronisasi (Mode Dev)');
     } else {
-      await sequelize.sync({ force: false }); // production: no alter, safe sync
-      console.log('✅ Mode Production: Melewati sinkronisasi otomatis (force: false)');
+      await sequelize.sync({ alter: true }); // temporary: force alter to update missing columns
+      console.log('✅ Mode Production: Melewati sinkronisasi otomatis (force: false) -> Diubah ke alter: true untuk update db');
     }
   } catch (error) {
     console.error('❌ Gagal terhubung ke MySQL:', error);

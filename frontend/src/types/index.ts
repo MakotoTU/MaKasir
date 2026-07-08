@@ -3,8 +3,6 @@ export interface Product {
   name: string
   price: number
   category: string
-  stock: number
-  minimumStock: number
 }
 
 export interface User {

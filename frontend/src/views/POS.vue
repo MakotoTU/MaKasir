@@ -18,6 +18,21 @@ const isCheckingOut = ref(false)
 // Payment
 const paymentMethod = ref<'cash' | 'qris'>('cash')
 const amountPaid = ref<number | null>(null)
+const formattedAmountPaid = computed({
+  get() {
+    if (amountPaid.value == null) return ''
+    return amountPaid.value.toLocaleString('id-ID')
+  },
+  set(val: string) {
+    if (!val) {
+      amountPaid.value = null
+      return
+    }
+    const num = parseInt(val.replace(/\D/g, ''), 10)
+    amountPaid.value = isNaN(num) ? null : num
+  }
+})
+
 const changeDue = computed(() => {
   if (paymentMethod.value !== 'cash' || amountPaid.value == null) return null
   return amountPaid.value - totalCart.value
@@ -255,9 +270,8 @@ onMounted(() => {
           <div class="cash-input" v-if="paymentMethod === 'cash'">
             <label>Uang Diterima (Rp)</label>
             <input
-              v-model.number="amountPaid"
-              type="number"
-              :min="totalCart"
+              v-model="formattedAmountPaid"
+              type="text"
               placeholder="Masukkan nominal..."
             />
             <div class="change-display" v-if="changeDue !== null">
